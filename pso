@@ -1,0 +1,45 @@
+import random
+
+def fitness(x):
+    return x**2
+
+class Particle:
+    def __init__(self, bounds):
+        self.position = random.uniform(bounds[0], bounds[1])
+        self.velocity = random.uniform(-1, 1)
+        self.best_pos = self.position
+        self.best_val = fitness(self.position)
+
+    def update_velocity(self, global_best, w=0.7, c1=1.5, c2=1.5):
+        r1, r2 = random.random(), random.random()
+        cognitive = c1 * r1 * (self.best_pos - self.position)
+        social = c2 * r2 * (global_best - self.position)
+        self.velocity = w * self.velocity + cognitive + social
+
+    def update_position(self, bounds):
+        self.position += self.velocity
+        self.position = max(bounds[0], min(bounds[1], self.position))
+        value = fitness(self.position)
+        if value < self.best_val:
+            self.best_pos = self.position
+            self.best_val = value
+
+def pso(num_particles=10, bounds=(-10, 10), max_iter=10):
+    swarm = [Particle(bounds) for _ in range(num_particles)]
+    global_best = min(swarm, key=lambda p: p.best_val).best_pos
+    global_best_val = fitness(global_best)
+    for t in range(max_iter):
+        for particle in swarm:
+            particle.update_velocity(global_best)
+            particle.update_position(bounds)
+        candidate = min(swarm, key=lambda p: p.best_val)
+        if candidate.best_val < global_best_val:
+            global_best = candidate.best_pos
+            global_best_val = candidate.best_val
+        print(f"Iteration {t+1}: Global best = {global_best:.4f}, Value = {global_best_val:.4f}")
+    return global_best, global_best_val
+
+best_x, best_val = pso()
+print("\nFinal Solution:")
+print("Best position:", best_x)
+print("Best value:", best_val)
